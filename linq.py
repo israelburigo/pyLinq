@@ -1,7 +1,3 @@
-import datetime as dt
-from pprint import*
-
-import math
 
 class Linq(object):
 
