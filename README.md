@@ -1,0 +1,2 @@
+# pyLinq
+Linq em Python
