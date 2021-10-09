@@ -1,55 +1,53 @@
 
-class Linq(object):
+from __future__ import annotations
+from typing import List, TypeVar, Callable, Generic
+T = TypeVar('T') 
+R = TypeVar('R') 
 
-    def __init__(self, obj):
-        self.__list = obj
+
+class Linq(Generic[T]):
+    __list: List[T]
+    def __init__(self, list:List[T]) -> None:
+        self.__list = list
 
     def __len__(self):
         return len(self.__list)
 
-    def select(self, exp):
-        l = [exp(item) for item in self.__list]
-        return Linq(l)
-
-    def where(self, exp):
-        l = [item for item in self.__list if exp(item)]
-        return Linq(l)
-
-    def any(self, exp = None):
+    def any(self, exp:Callable[[T], bool] = None) -> bool:
         if exp is None:
-            return len(self.__list) > 0
-        l = self.where(exp)
-        return len(l) > 0  
+            return len(self) > 0
+        for i in self.__list:
+            if exp(i):
+                return True
+        return False
 
-    def all(self, exp):
-        l = self.where(exp)
-        return len(self.__list) == len(l)
+    def where(self, exp:Callable[[T], bool]) -> Linq[T]:
+        list = [i for i in self.__list if exp(i)]
+        return Linq[T](list)
 
-    def first(self, exp = None):
+    def select(self, exp:Callable[[T], R]) -> Linq[R]:
+        list = [exp(i) for i in self.__list]
+        return Linq[R](list)
+
+    def first(self, exp:Callable[[T], bool] = None) -> T:
         if exp is None:
-            return None if len(self.__list) == 0 else self.__list[0]
-        l = self.where(exp)
-        return None if len(l) == 0 else l[0]
+            return None if len(self) == 0 else self.__list[0]
+        list = self.where(exp)
+        return None if len(list) == 0 else list.__list[0]
 
-    def last(self, exp = None):
+    def last(self, exp:Callable[[T], bool] = None) -> T:
         if exp is None:
-            return None if len(self.__list) == 0 else self.__list[-1]
-        l = self.where(exp)
-        return None if len(l) == 0 else l[-1]
+            return None if len(self) == 0 else self.__list[-1]
+        list = self.where(exp)
+        return None if len(list) == 0 else list.__list[-1]
 
-    def group(self, exp):        
-        l = set(self.select(exp).toList())
-        l = [[item for item in self.__list if exp(item) == key] for key in l]
-        return Linq(l)
+    def order(self, exp:Callable[[T], bool]) -> Linq[T]:
+        list = sorted(self.__list, key = exp)
+        return Linq[T](list)
 
-    def order(self, exp):
-        l = sorted(self.__list, key = exp)
-        return Linq(l)
+    def orderDesc(self, exp:Callable[[T], bool]) -> Linq[T]:
+        list = sorted(self.__list, key = exp, reverse=True)
+        return Linq[T](list)
 
-    def orderDesc(self, exp):
-        l = sorted(self.__list, key = exp, reverse=True)
-        return Linq(l)
-
-    def toList(self):
+    def toList(self) -> List[T]:
         return list(self.__list)
-
